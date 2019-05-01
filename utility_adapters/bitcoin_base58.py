@@ -113,7 +113,7 @@ def forAddress(h: bytes, nettype: str, is_script: bool):
         global g_base58_prefixes
 
         prefix = g_base58_prefixes[("mainnet", "testnet")[nettype != 'mainnet']][("PKH", "SH")[is_script == True]]
-        print('address prefix before encoding = %02x' % prefix)
+#        print('address prefix before encoding = %02x' % prefix)
         address = base58.base58checkEncode(binascii.unhexlify('%02x' % prefix), h)
         return address
 
@@ -131,7 +131,7 @@ def encodeWifPrivkey(h: int, nettype: str, for_compressed_pubkey: bool):
         global g_base58_prefixes
 
         prefix = g_base58_prefixes[("mainnet", "testnet")[nettype != 'mainnet']][("WIF_Uncompressed", "WIF_Compressed")[for_compressed_pubkey == True]]
-        print('wif prefix before encoding = %02x' % prefix)
+#        print('wif prefix before encoding = %02x' % prefix)
         h_b = binascii.unhexlify('%064x' % h)
         if for_compressed_pubkey == True:
                 h_b = h_b + b'\01'

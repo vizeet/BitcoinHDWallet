@@ -16,6 +16,14 @@ def compressPubkey(pubkey: bytes):
                 compressed_pubkey = b'\x03' + x_b
         return compressed_pubkey
 
+def privkeystr2pubkey(privkey_s: str):
+        compress = False
+        if len(privkey_s) == 66:
+                privkey_s = privkey_s[0:64]
+                compress = True
+        privkey_i = int(privkey_s, 16)
+        return privkey2pubkey(privkey_i)
+
 def privkey2pubkey(privkey: int):
         bitcoin_sec256k1 = bitcoin_secp256k1.BitcoinSec256k1()
         pubkey = bitcoin_sec256k1.privkey2pubkey(privkey)
@@ -24,24 +32,20 @@ def privkey2pubkey(privkey: int):
         compressed_pubkey = compressPubkey(full_pubkey)
         return compressed_pubkey
 
-#def privkey2pubkey(privkey: int):
-#        order = ecdsa.SECP256k1.generator.order()
-#        privkey_b = binascii.unhexlify(str('%064x' % privkey))
-#        p = ecdsa.SigningKey.from_string(privkey_b, curve=ecdsa.SECP256k1).verifying_key.pubkey.point
-#        x_str = ecdsa.util.number_to_string(p.x(), order)
-#        y_str = ecdsa.util.number_to_string(p.y(), order)
-#        #pubkey = bitcoin_sec256k1.privkey2pubkey(privkey).to_string()
-#        #full_pubkey = b'\x04' + binascii.unhexlify(str('%064x' % x_str)) + binascii.unhexlify(str('%064x' % y_str))
-#        full_pubkey = b'\x04' + x_str + y_str
-#        compressed_pubkey = compressPubkey(full_pubkey)
-#        return compressed_pubkey
-
-def privkeyHex2Wif(privkey: int):
-        wif = bitcoin_base58.encodeWifPrivkey(privkey, "mainnet", True)
+def privkeyHex2Wif(privkey: int, nettype: str):
+        wif = bitcoin_base58.encodeWifPrivkey(privkey, nettype, True)
         return wif
 
-def pkh2address(pkh: bytes):
-        address = bitcoin_base58.forAddress(pkh, "mainnet", False)
+def privkeyWif2Hex(privkey: str):
+        nettype, prefix, privkey, for_compressed_pubkey = bitcoin_base58.decodeWifPrivkey(privkey)
+        return privkey
+
+def pkh2address(pkh: bytes, nettype: str):
+        address = bitcoin_base58.forAddress(pkh, nettype, False)
+        return address
+
+def sh2address(sh: bytes, nettype: str):
+        address = bitcoin_base58.forAddress(sh, nettype, True)
         return address
 
 def pkh2addressLTC(pkh: bytes):

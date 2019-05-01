@@ -39,15 +39,15 @@ def base58_decode(s: str):
 
 def base58checkEncode(prefix: bytes, h: bytes):
         with_prefix = prefix + h
-        print('with prefx = %s' % bytes.decode(binascii.hexlify(with_prefix)))
+#        print('with prefx = %s' % bytes.decode(binascii.hexlify(with_prefix)))
         with_checksum = with_prefix + hash256(with_prefix)[0:4]
-        print('with prefx and checksum = %s' % bytes.decode(binascii.hexlify(with_checksum)))
-        print('with prefix and checksum int = %x' % int(binascii.hexlify(with_checksum[1:]), 16))
+#        print('with prefx and checksum = %s' % bytes.decode(binascii.hexlify(with_checksum)))
+#        print('with prefix and checksum int = %x' % int(binascii.hexlify(with_checksum[1:]), 16))
         encode = base58_encode(int(binascii.hexlify(with_checksum), 16))
         if prefix == b'\x00':
                 encoded_prefix = base58_encode(0)
                 encode = encoded_prefix + encode
-        print('encoded base58 = %s' % encode)
+#        print('encoded base58 = %s' % encode)
         return encode
 
 def base58checkDecode(s: str):
@@ -59,20 +59,20 @@ def base58checkDecode(s: str):
 def base58checkVerify(prefix: str, val: str):
         decoded_val = base58_decode(val)
         decoded_prefix = base58_decode(prefix)
-        print('decoded prefix = %02x' % decoded_prefix)
+#        print('decoded prefix = %02x' % decoded_prefix)
         val_str = '%02x' % decoded_val
         if len(val_str) % 2 == 1:
                 val_str = '0' + val_str
-        print('decoded val = %s' % val_str)
+#        print('decoded val = %s' % val_str)
         postfix = binascii.unhexlify(val_str)[-4:]
-        print('hash from value = %s' % bytes.decode(binascii.hexlify(postfix)))
+#        print('hash from value = %s' % bytes.decode(binascii.hexlify(postfix)))
         val_without_postfix = binascii.unhexlify(val_str)[0:-4]
-        print('value = %s' % bytes.decode(binascii.hexlify(val_without_postfix)))
+#        print('value = %s' % bytes.decode(binascii.hexlify(val_without_postfix)))
         if decoded_prefix == 0x00:
                 val_without_postfix = b'\x00' + val_without_postfix
-        print('value = %s' % bytes.decode(binascii.hexlify(val_without_postfix)))
+#        print('value = %s' % bytes.decode(binascii.hexlify(val_without_postfix)))
         h = hash256(val_without_postfix)[0:4]
-        print('hash of value = %s' % bytes.decode(binascii.hexlify(h)))
+#        print('hash of value = %s' % bytes.decode(binascii.hexlify(h)))
         if h == postfix:
                 return True
         return False

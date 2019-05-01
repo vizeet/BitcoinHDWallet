@@ -56,6 +56,9 @@ def getRandomNumberBits(bit_count: int):
 
         # update with system random number
         sys_rand = '%x' % random.SystemRandom().randrange(0, 1 << 32)
+        if sys_rand.__len__() % 2 == 1:
+                sys_rand = "0{}".format(sys_rand)
+#        print('sys_rand = %s' % sys_rand)
         sys_rand_b = binascii.unhexlify(sys_rand)
         h.update(sys_rand_b)
 
