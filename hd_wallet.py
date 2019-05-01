@@ -5,18 +5,21 @@ from utils import pbkdf2
 import binascii
 import optparse
 import sys
-from utility_adapters import bitcoin_secp256k1
-from utils import base58
+from utility_adapters import bitcoin_secp256k1, hash_utils
 import pubkey_address 
 import tkinter
 from functools import partial 
 import pyqrcode
 from ecdsa import SigningKey, SECP256k1
+import json
 
 message1 = []
 entries = []
 
 word_list = []
+
+g_salt = json.load(open('hd_wallet.conf'))['salt']
+g_network = json.load(open('hd_wallet.conf'))['network']
 
 def on_button(y, entry, toplevel):
         #print("%d: %s" % (y, entry.get()))
@@ -56,13 +59,6 @@ def on_button_selector(entry, root):
 # implementation of BIP32
 # mainnet: 0x0488B21E public, 0x0488ADE4 private; testnet: 0x043587CF public, 0x04358394 private
 
-def hash160(secret: bytes):
-        secrethash = hashlib.sha256(secret).digest()
-        h = hashlib.new('ripemd160')
-        h.update(secrethash)
-        secret_hash160 = h.digest()
-        return secret_hash160
-
 def generateSeedFromStr(code: str, salt: str):
         seed = pbkdf2.pbkdf2(hashlib.sha512, code, salt, 2048, 64)
         #print('seed = %s' % bytes.decode(binascii.hexlify(seed)))
@@ -73,35 +69,6 @@ def generateMasterKeys(seed: bytes):
         private_key = int(binascii.hexlify(h[0:32]), 16)
         chaincode = h[32:64]
         return private_key, chaincode
-
-def encodedSerializationKeys(key: int, chaincode: bytes, depth: int, is_private: bool, is_mainnet: bool, child_index=0, parent_key=0):
-        if is_private == True:
-                if is_mainnet == True:
-                        version = b'\x04\x88\xAD\xE4'
-                else:
-                        version = b'\x04\x35\x83\x94'
-        else:
-                if is_mainnet == True:
-                        version = b'\x04\x88\xB2\x1E'
-                else:
-                        version = b'\x04\x35\x87\xCF'
-        if depth == 0:
-                # for root key
-                parent_fingerprint = b'\x00\x00\x00\x00'
-        else:
-                parent_fingerprint = hash160(binascii.unhexlify('%064x' % parent_key))[0:4]
-
-        key_b = b'\x00' + binascii.unhexlify('%064x' % key)
-        child_number = binascii.unhexlify('%08x' % child_index)                
-        serialized_key = version + bytes([depth]) + parent_fingerprint + child_number + chaincode + key_b
-        #print('serialized key = %s' % bytes.decode(binascii.hexlify(serialized_key)))
-        h = hashlib.sha256(hashlib.sha256(serialized_key).digest()).digest()
-        #print('hash = %s' % bytes.decode(binascii.hexlify(h)))
-        serialized_key_with_checksum = int(binascii.hexlify(serialized_key + h[0:4]), 16)
-        #print('with checksum: %x' % serialized_key_with_checksum)
-        encoded_serialized_key = base58.base58_encode(serialized_key_with_checksum)
-
-        return encoded_serialized_key
 
 def generateChildAtIndex(privkey: int, chaincode: bytes, index: int):
         if index >= (1<<31):
@@ -128,7 +95,7 @@ def generateChildAtIndex(privkey: int, chaincode: bytes, index: int):
 
 def generatePrivkeyPubkeyPair(keypath: str, seed: bytes, compressed: bool):
         keypath_list = keypath.replace(' ', '').split('/')
-        print(keypath_list)
+#        print(keypath_list)
         if keypath_list[0] != 'm':
                 return None
         for key in keypath_list:
@@ -153,64 +120,30 @@ def generatePrivkeyPubkeyPair(keypath: str, seed: bytes, compressed: bool):
         return privkey, pubkey
 
 if __name__ == '__main__':
-        parser = optparse.OptionParser(usage="python3 hd_wallet.py -s <Salt>")
-        parser.add_option('-s', '--salt', action='store', dest='salt', help='Add salt to secret')
-        (args, _) = parser.parse_args()
-        if args.salt == None:
-                print ("Missing required argument")
-                sys.exit(1)
-
         word_list = mnemonic_code.getMnemonicWordList()
 
-        #top = tkinter.Tk()
         top = tkinter.Toplevel()
         top.title("RUN ON START TEST")
-        #frame = tkinter.Frame(top)
+
         testvar = tkinter.StringVar()
         testvar.set("Test")
         get = tkinter.Button(top, textvariable=testvar, command=lambda:callback2(testvar))
-        #get = tkinter.Button(top, text='Get', command=lambda:callback2(testvar))
 
         for y in range(0,12):
                 entries.append('')
                 message1.append(tkinter.StringVar())
                 message1[y].set('%d:unset' % (y+1))
-                #b = tkinter.Button(frame, textvariable=message1[y],   command=lambda y=y: callback(y))
                 b = tkinter.Button(textvariable=message1[y],   command=lambda y=y: callback(y))
                 b.grid(row=0,column=y)
-        #frame.pack()
         get.pack()
 
         top.mainloop()
 
-        #mnemonic_code_list = mnemonic_code.getMnemonicWordCodeString(12)
-        #mnemonic_code = " ".join(mnemonic_code_list)
         mnemonic_code_str = " ".join(entries)
         print('is valid = %r' % mnemonic_code.verifyMnemonicWordCodeString(mnemonic_code_str))
-        #print('mnemonic code: %s' % mnemonic_code)
-        seed_b = generateSeedFromStr(mnemonic_code_str, "mnemonic" + args.salt)
 
-        master_privkey, master_chaincode = generateMasterKeys(seed_b)
+        seed_b = generateSeedFromStr(mnemonic_code_str, "mnemonic" + g_salt)
 
-        if master_privkey == 0 or master_privkey >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F:
-                print('invalid master key')
-
-        #print('master private key = %x, master chaincode = %s' % (master_privkey, bytes.decode(binascii.hexlify(master_chaincode))))
-        encoded_serialized_key = encodedSerializationKeys(master_privkey, master_chaincode, 0, True, True)
-        #print('Encoded Serialized Key = %s' % encoded_serialized_key)
-
-        # for hardened
-        child_privkey, child_chaincode = generateChildAtIndex(master_privkey, master_chaincode, 1<<31)
-        #print('child private key = %x, child chaincode = %s' % (child_privkey, bytes.decode(binascii.hexlify(child_chaincode))))
-
-        # for normal
-        child_privkey, child_chaincode = generateChildAtIndex(master_privkey, master_chaincode, 0)
-        #print('child private key = %x, child chaincode = %s' % (child_privkey, bytes.decode(binascii.hexlify(child_chaincode))))
-
-        #print('seed = %s' % bytes.decode(binascii.hexlify(seed_b)))
-
-        #privkey_i, chaincode = generatePrivkeyPubkeyPair('m / 5\'/ 6', seed_b, True)
-        #key_selector = 'm/10/2'
         root = tkinter.Tk()
         selector = tkinter.StringVar()
         entry = tkinter.Entry(root, textvariable=selector, width=20)
@@ -221,18 +154,13 @@ if __name__ == '__main__':
 
         #print('inside main: key_selector = %s' % key_selector)
         privkey_i, chaincode = generatePrivkeyPubkeyPair(key_selector, seed_b, True)
-        privkey_wif = pubkey_address.privkeyHex2Wif(privkey_i)
-        address_s = pubkey_address.pubkey2address(chaincode)
-        #print('keys at m/5\'/6: private key = %s, public key = %s, addess = %s' % (privkey_wif, bytes.decode(binascii.hexlify(chaincode)), address_s))
-        print('keys at %s: privkey_i = %x, private key = %s, public key = %s, addess = %s' % (key_selector, privkey_i, privkey_wif, bytes.decode(binascii.hexlify(chaincode)), address_s))
-
-
-#        root = tkinter.Tk()
-#        root.attributes("-fullscreen", True)
-#        T = tkinter.Text(root, height=10, width=100, font=("Helvetica", 32))
-#        T.pack()
-#        T.insert(tkinter.END, address_s)
-#        root.mainloop()
+        privkey_wif = pubkey_address.privkeyHex2Wif(privkey_i, g_network)
+        pubkey = bytes.decode(binascii.hexlify(chaincode))
+        hash160_b = hash_utils.hash160(chaincode)
+        script_b = b'\x00\x14' + hash160_b
+        hash160_script_b = hash_utils.hash160(script_b)
+        address_s = pubkey_address.sh2address(hash160_script_b, g_network)
+        print('keys at %s: privkey_i = %x, private key = %s, public key = %s, hash160 = %s, p2sh_p2wpkh script = %s, p2sh_p2wsh hash = %s, p2sh_p2wpkh address = %s' % (key_selector, privkey_i, privkey_wif, pubkey, bytes.decode(binascii.hexlify(hash160_b)), bytes.decode(binascii.hexlify(script_b)), bytes.decode(binascii.hexlify(hash160_script_b)), address_s))
 
         code = pyqrcode.create(address_s)
         code_xbm = code.xbm(scale=5)
@@ -245,12 +173,12 @@ if __name__ == '__main__':
         label.pack()
         top.mainloop()
 
-        if input('address = ') == address_s:
-            print('address is valid')
-        if input('public key = ') == bytes.decode(binascii.hexlify(chaincode)):
-            print('public key is valid')
-        if input('private key = ') == privkey_wif:
-            print('private key is valid')
+#        if input('address = ') == address_s:
+#            print('address is valid')
+#        if input('public key = ') == bytes.decode(binascii.hexlify(chaincode)):
+#            print('public key is valid')
+#        if input('private key = ') == privkey_wif:
+#            print('private key is valid')
 
 
 #if __name__ == '__main__':
