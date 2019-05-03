@@ -16,3 +16,4 @@ sudo apt install -y /tmp/autosetup/python3-wheel_0.29.0-1_all.deb
 sudo apt install -y /tmp/autosetup/python3-pip_8.1.1-2ubuntu0.4_all.deb 
 pip3 install --user /tmp/autosetup/pygame-1.9.5-cp35-cp35m-manylinux1_x86_64.whl
 pip3 install --user /tmp/autosetup/PyQRCode-1.2.1.tar.gz
+pip3 install --user /tmp/autosetup/ecdsa-0.13.2-py2.py3-none-any.whl
