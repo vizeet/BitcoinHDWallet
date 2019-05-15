@@ -8,6 +8,7 @@ import json
 import binascii
 import hashlib
 import hmac
+from ecdsa import SigningKey, SECP256k1
 
 message1 = []
 entries = []
