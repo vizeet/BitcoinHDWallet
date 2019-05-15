@@ -7,6 +7,7 @@ import tkinter
 import json
 import binascii
 import hashlib
+import hmac
 
 message1 = []
 entries = []
