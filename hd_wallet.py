@@ -74,7 +74,7 @@ def get_addresses(seed_b: bytes):
         for index in range(first, last + 1):
                 key_selector = '%s/%d' % (key_selector_first.rsplit('/', 1)[0], index)
                 print('key_selector = %s' % key_selector)
-                privkey_i, chaincode = hd_wallet.generatePrivkeyPubkeyPair(key_selector, seed_b, True)
+                privkey_i, chaincode = generatePrivkeyPubkeyPair(key_selector, seed_b, True)
                 privkey_wif = pubkey_address.privkey2Wif(privkey_i, g_network)
                 pubkey = bytes.decode(binascii.hexlify(chaincode))
                 hash160_b = hash_utils.hash160(chaincode)
