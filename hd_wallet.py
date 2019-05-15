@@ -98,6 +98,29 @@ def generate_addresses(mnemonic_code_s: str, first: str, last: str):
 
         return jsonobj
 
+def generateChildAtIndex(privkey: int, chaincode: bytes, index: int):
+        if index >= (1<<31):
+                # hardened
+                #print('hardened')
+                h = hmac.new(chaincode, b'\x00' + binascii.unhexlify('%064x' % privkey) + binascii.unhexlify('%08x' % index), hashlib.sha512).digest()
+                #print('child seed = %s' % bytes.decode(binascii.hexlify(b'\x00' + binascii.unhexlify('%064x' % privkey) + binascii.unhexlify('%08x' % index))))
+                #print('h = %s' % bytes.decode(binascii.hexlify(h)))
+        else:
+                # normal
+                privkey_s = '%064x' % privkey
+                privkey_b = binascii.unhexlify(privkey_s)
+                sk = SigningKey.from_string(privkey_b, curve=SECP256k1)
+                vk = sk.get_verifying_key()
+
+                full_pubkey_b = b'\x04' + vk.to_string()
+                pubkey = pubkey_address.compressPubkey(full_pubkey_b)
+                h = hmac.new(chaincode, pubkey + binascii.unhexlify('%08x' % index), hashlib.sha512).digest()
+        childprivkey = (int(binascii.hexlify(h[0:32]), 16) + privkey) % bitcoin_secp256k1.N
+        #print('h[0:32] = %x' % int(binascii.hexlify(h[0:32]), 16))
+        #print('privkey = %x' % privkey)
+        child_chaincode = h[32:64]
+        return childprivkey, child_chaincode
+
 def generateMasterKeys(seed: bytes):
         h = hmac.new(bytes("Bitcoin seed", 'utf-8'),seed, hashlib.sha512).digest()
         private_key = int(binascii.hexlify(h[0:32]), 16)
