@@ -11,12 +11,16 @@ import time
 q = queue.Queue()
 
 #def getRandomNumber():
-#        return random.SystemRandom().getrandbits(256)
+#        return random.SystemRandomo().getrandbits(256)
 
 def getRawCameraOutput():
         pygame.init()
         pygame.camera.init()
-        cam = pygame.camera.Camera(pygame.camera.list_cameras()[0])
+        camera_list = pygame.camera.list_cameras()
+        if len(camera_list) == 0:
+                pygame.camera.quit()
+                return None
+        cam = pygame.camera.Camera(camera_list[0])
         cam.start()
         raw = cam.get_raw()
         cam.stop()
@@ -47,7 +51,8 @@ def getRandomNumberBits(bit_count: int):
 
         # update with raw camera output
         raw_photo = getRawCameraOutput()
-        h.update(raw_photo)
+        if raw_photo != None:
+                h.update(raw_photo)
 
         # update with raw mic output
 #        raw_sound = getRawMicOutput()

@@ -2,9 +2,11 @@ import hd_wallet
 import pubkey_address
 import mnemonic_code
 from utility_adapters import hash_utils
+from utils import pbkdf2
 import tkinter
 import json
 import binascii
+import hashlib
 
 message1 = []
 entries = []
@@ -84,7 +86,7 @@ def get_addresses(seed_b: bytes):
 
 def generate_addresses(mnemonic_code_s: str, first: str, last: str):
         global key_selector_first, key_selector_last
-        seed_b = generateSeedFromStr(mnemonic_code_s, "mnemonic" + salt)
+        seed_b = generateSeedFromStr(mnemonic_code_s, "mnemonic" + g_salt)
 
         key_selector_first = first
         key_selector_last = last
@@ -139,5 +141,3 @@ if __name__ == '__main__':
         jsonobj['addresses'] = get_addresses(seed_b)
 
         json.dump(jsonobj, open('transfer_info.json', 'wt'))
-
-        return jsonobj

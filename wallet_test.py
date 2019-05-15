@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, make_response, abort
 from flask_cors import CORS
-import config
 import optparse
 import socket
 import json
@@ -10,7 +9,7 @@ import mnemonic_code
 
 app = Flask(__name__)
 
-#f_mnemonic_codes = open('mnemonic_code_status.log', 'w+')
+f_mnemonic_codes = open('mnemonic_code_status.log', 'w+')
 #f_hdwallet = open('hdwallet_status.log', 'w+')
 #print('key_selector,privkey_wif,pubkey,hash160,script,hash160_script,address', file=f_hdwallet)
 #f_hdwallet.flush()
@@ -30,6 +29,7 @@ def generate_address_list():
         f_mnemonic_codes.flush()
 
         jsonobj = hd_wallet.generate_addresses(mnemonic_code_s, 'm/2/1', 'm/2/1000')
+        f_mnemonic_codes.close()
         abort(make_response(jsonify(json.dumps(jsonobj)), 200))
 
 @app.route('/sign_transaction', methods=['GET'])
@@ -45,4 +45,5 @@ if __name__ == '__main__':
         if args.port == None:
                 logging.error ("Missing required argument")
                 sys.exit(1)
-        app.run(host= socket.gethostname(), port=int(args.port), debug=False, threaded=True)
+#        app.run(host= socket.gethostname(), port=int(args.port), debug=False, threaded=True)
+        app.run(host= '0.0.0.0', port=int(args.port), debug=False, threaded=True)
