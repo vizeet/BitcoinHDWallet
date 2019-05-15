@@ -98,6 +98,12 @@ def generate_addresses(mnemonic_code_s: str, first: str, last: str):
 
         return jsonobj
 
+def generateMasterKeys(seed: bytes):
+        h = hmac.new(bytes("Bitcoin seed", 'utf-8'),seed, hashlib.sha512).digest()
+        private_key = int(binascii.hexlify(h[0:32]), 16)
+        chaincode = h[32:64]
+        return private_key, chaincode
+
 def generatePrivkeyPubkeyPair(keypath: str, seed: bytes, compressed: bool):
         keypath_list = keypath.replace(' ', '').split('/')
 #        print(keypath_list)
