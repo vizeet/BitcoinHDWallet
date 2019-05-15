@@ -1,7 +1,7 @@
 import hd_wallet
 import pubkey_address
 import mnemonic_code
-from utility_adapters import hash_utils
+from utility_adapters import bitcoin_secp256k1, hash_utils
 from utils import pbkdf2
 import tkinter
 import json
