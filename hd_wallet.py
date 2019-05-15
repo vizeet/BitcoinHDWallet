@@ -96,6 +96,32 @@ def generate_addresses(mnemonic_code_s: str, first: str, last: str):
 
         return jsonobj
 
+def generatePrivkeyPubkeyPair(keypath: str, seed: bytes, compressed: bool):
+        keypath_list = keypath.replace(' ', '').split('/')
+#        print(keypath_list)
+        if keypath_list[0] != 'm':
+                return None
+        for key in keypath_list:
+                if key == 'm':
+                        privkey, chaincode = generateMasterKeys(seed)
+                else:
+                        if "'" in key:
+                                index = int(key[:-1]) + (1<<31)
+                        else:
+                                index = int(key)
+                        privkey, chaincode = generateChildAtIndex(privkey, chaincode, index)
+                #print('key = %s' % key)
+                #print('private key = %x, chaincode = %s' % (privkey, bytes.decode(binascii.hexlify(chaincode))))
+        privkey_s = '%064x' % privkey
+        privkey_b = binascii.unhexlify(privkey_s)
+        sk = SigningKey.from_string(privkey_b, curve=SECP256k1)
+        vk = sk.get_verifying_key()
+
+        full_pubkey_b = b'\x04' + vk.to_string()
+        pubkey = pubkey_address.compressPubkey(full_pubkey_b)
+#        print('privkey = %x, pubkey = %s' % (privkey, bytes.decode(binascii.hexlify(pubkey))))
+        return privkey, pubkey
+
 if __name__ == '__main__':
         word_list = mnemonic_code.getMnemonicWordList()
 
