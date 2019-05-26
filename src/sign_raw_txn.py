@@ -332,7 +332,7 @@ def sign_raw_txn(mptr:mmap, privkey_list: list, input_txns: list):
 
         return signed_txn
 
-def return_signed_txn(jsonobj: dict):
+def return_signed_txn(jsonobj: dict, privkey_wif_list: list):
         raw_txn_s = jsonobj['Raw Txn']
         mptr = mmap.mmap(-1, len(raw_txn_s) + 1)
         mptr.write(binascii.unhexlify(raw_txn_s))
@@ -340,10 +340,9 @@ def return_signed_txn(jsonobj: dict):
 
         input_count = getInputCountFromTxn(mptr)
 
-        privkey_wif_list = []
-        for index in range(input_count):
-                privkey_wif_list.append(input('Private Key for input %d:' % (index + 1)))
-
+#        privkey_wif_list = []
+#        for index in range(input_count):
+#                privkey_wif_list.append(input('Private Key for input %d:' % (index + 1)))
 
         input_txns = jsonobj['Inputs']
 
