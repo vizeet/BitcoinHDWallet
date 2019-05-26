@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mkisofs -r -J -v -o disk.iso ./src ./autosetup
+mkisofs -r -J -v -o disk.iso ./cdrom
