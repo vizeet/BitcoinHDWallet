@@ -35,7 +35,7 @@ def generate_address_list(salt: str, network: str):
         import hd_wallet
         global file_path_g
 
-        with open('../config/hd_wallet.conf', 'rt') as wallet_config:
+        with open('../../config/hd_wallet.conf', 'rt') as wallet_config:
                 jsonobj = json.load(wallet_config)
 
         wallet = hd_wallet.HDWallet(salt, network)
