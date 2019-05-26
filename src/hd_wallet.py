@@ -175,7 +175,7 @@ class HDWallet:
                 return privkey, pubkey
 
 if __name__ == '__main__':
-        with open('hd_wallet.conf', 'rt') as wallet_config:
+        with open('../config/hd_wallet.conf', 'rt') as wallet_config:
                 jsonobj = json.load(wallet_config)
         salt = jsonobj['salt']
         network = jsonobj['network']
