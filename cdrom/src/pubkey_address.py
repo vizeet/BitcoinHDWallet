@@ -24,15 +24,6 @@ def privkeyHex2pubkey(privkey_s: str):
         privkey_i = int(privkey_s, 16)
         return privkey2pubkey(privkey_i, compress)
 
-#def privkey2pubkey(privkey: int, compress = True):
-#        bitcoin_sec256k1 = bitcoin_secp256k1.BitcoinSec256k1()
-#        pubkey = bitcoin_sec256k1.privkey2pubkey(privkey)
-##        full_pubkey = b'\x04' + binascii.unhexlify(str('%064x' % pubkey[0])) + binascii.unhexlify(str('%064x' % pubkey[1]))
-#        pubkey = binascii.unhexlify('04%064x%064x' % (pubkey[0],pubkey[1]))
-#        if compress == True:
-#                pubkey = compressPubkey(pubkey)
-#        return pubkey
-
 def privkey2pubkey(privkey: int, compress = True):
         privkey_s = '%064x' % privkey
         if privkey_s.__len__() % 2 == 1:
@@ -71,18 +62,8 @@ def sh2address(sh: bytes, nettype: str):
         address = bitcoin_base58.forAddress(sh, nettype, True)
         return address
 
-def pkh2addressLTC(pkh: bytes):
-        address = litecoin_base58.forAddress(pkh, "mainnet", False)
-        return address
-
 def pubkey2address(pubkey: bytes):
         pkh = hash_utils.hash160(pubkey)
         print('pkh = %s' % bytes.decode(binascii.hexlify(pkh)))
         address = pkh2address(pkh)
-        return address
-
-def pubkey2addressLTC(pubkey: bytes):
-        pkh = hash_utils.hash160(pubkey)
-        print('pkh = %s' % bytes.decode(binascii.hexlify(pkh)))
-        address = pkh2addressLTC(pkh)
         return address

@@ -2,7 +2,6 @@
 
 import json
 import mmap
-import optparse
 import binascii
 from utility_adapters import hash_utils
 import pubkey_address
@@ -179,23 +178,17 @@ def estimateSignedTxnSize(mptr: mmap, txn_type = "p2sh-p2wpkh"):
 
         estimated_signed_txn_size = witness_flag_size + signature_size + witness_size + raw_txn_size
 
-        print("witness_flag_size = %d, signature_size = %d, witness_size = %d, raw_txn_size = %d" % (witness_flag_size, signature_size, witness_size, raw_txn_size))
-
         return estimated_signed_txn_size
 
 def validateRawTxn(mptr: mmap):
         pass
 
 def sign_txn_input(preimage: bytes, privkey_wif: str):
-        print('privkey_wif = %s' % privkey_wif)
-        print('preimage = %s' % bytes.decode(binascii.hexlify(preimage)))
         hash_preimage = hash_utils.hash256(preimage)
         privkey_s = pubkey_address.privkeyWif2Hex(privkey_wif)
-        print('privkey_s = %s' % privkey_s)
         privkey_b = binascii.unhexlify(privkey_s)[:-1]
         signingkey = ecdsa.SigningKey.from_string(privkey_b, curve=ecdsa.SECP256k1)
         sig_b = signingkey.sign_digest(hash_preimage, sigencode=ecdsa.util.sigencode_der_canonize) +b'\x01'
-        print('sig = %s' % bytes.decode(binascii.hexlify(sig_b)))
         return sig_b
 
 def get_p2sh_witness_redeem_script(hash_b: bytes):
@@ -273,19 +266,10 @@ def get_preimage_list_p2sh_p2wpkh(mptr: mmap, privkey_list: list, input_txns: li
                 script = bytes([0x76, 0xa9, len(hash160_b)]) + hash160_b + bytes([0x88, 0xac])
                 script_size_b = bytes([len(script)])
                 preimage = version + hash_prevouts + hash_sequence + outpoints[index] + script_size_b + script + amount_b + sequences[index] + hash_outs + locktime_b + sighash_all
-                print('version = %s, hash_prevouts = %s, hash_sequence = %s, outpoint = %s, script_size = %s, script = %s, amount = %s, sequence = %s, hash_outs = %s, locktime = %s, sighash_all = %s' % (bytes.decode(binascii.hexlify(version)), bytes.decode(binascii.hexlify(hash_prevouts)), bytes.decode(binascii.hexlify(hash_sequence)), bytes.decode(binascii.hexlify(outpoints[index])), bytes.decode(binascii.hexlify(script_size_b)), bytes.decode(binascii.hexlify(script)), bytes.decode(binascii.hexlify(amount_b)), bytes.decode(binascii.hexlify(sequences[index])), bytes.decode(binascii.hexlify(hash_outs)), bytes.decode(binascii.hexlify(locktime_b)), bytes.decode(binascii.hexlify(sighash_all))))
                 preimage_list.append(preimage)
         return preimage_list
 
-#def copy_and_insert_mmap(mptr:mmap, copy_array: list):
-#        signed_txn = b''
-#        for copy_info in copy_array:
-#                mptr_read = mptr.read(copy_info['index'])
-#                signed_txn += mptr_read + copy_info['bytes']
-#
-#        return signed_txn
-
-def sign_raw_txn(mptr:mmap, privkey_list: list, input_txns: list):
+def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
         prev_ptr = mptr.tell()
         mptr.seek(0)
         signed_txn = b''
@@ -293,18 +277,20 @@ def sign_raw_txn(mptr:mmap, privkey_list: list, input_txns: list):
 
         print('estimated txn size = %d' % estimated_txn_size)
 
-#        new_mptr = mmap.mmap(-1, estimated_txn_size + 1)
- 
         sign_helper = getTxnReqIndexesForSigning(mptr)
 
-        preimage_list = get_preimage_list_p2sh_p2wpkh(mptr, privkey_list)
+        privkey_wif_list = [address_privkey_map[in_txn['address']] for in_txn in input_txns]
+
+        preimage_list = get_preimage_list_p2sh_p2wpkh(mptr, privkey_wif_list, input_txns)
 
         mptr_read = mptr.read(sign_helper['segwit_marker']['loc'])
         signed_txn += mptr_read + b'\x00\x01'
 
         segwit_b = b''
-        for index in range(input_count):
-                pubkey_b = pubkey_address.privkeyWif2pubkey(privkey_list[index])
+        for index in range(len(input_txns)):
+                in_txn = input_txns[index]
+                privkey_wif = address_privkey_map[in_txn['address']]
+                pubkey_b = pubkey_address.privkeyWif2pubkey(privkey_wif)
                 hash160_b = hash_utils.hash160(pubkey_b)
                 script_b = b'\x00\x14' + hash160_b
                 script_size_b = bytes([len(script_b)])
@@ -316,7 +302,7 @@ def sign_raw_txn(mptr:mmap, privkey_list: list, input_txns: list):
                 mptr_read = mptr.read(1)
 
                 witness_count_b = b'\x02'
-                sign_b = sign_txn_input(preimage_list[index], privkey_list[index])
+                sign_b = sign_txn_input(preimage_list[index], privkey_wif)
                 witness1_size_b = bytes([len(sign_b)])
                 witness1_b = sign_b
                 witness2_size_b = bytes([len(pubkey_b)])
@@ -332,26 +318,16 @@ def sign_raw_txn(mptr:mmap, privkey_list: list, input_txns: list):
 
         return signed_txn
 
-def return_signed_txn(jsonobj: dict, privkey_wif_list: list):
-        raw_txn_s = jsonobj['Raw Txn']
+def return_signed_txn(jsonobj: dict, address_privkey_map: dict):
+        raw_txn_s = jsonobj['Raw txn']
         mptr = mmap.mmap(-1, len(raw_txn_s) + 1)
         mptr.write(binascii.unhexlify(raw_txn_s))
         mptr.seek(0)
 
-        input_count = getInputCountFromTxn(mptr)
-
-#        privkey_wif_list = []
-#        for index in range(input_count):
-#                privkey_wif_list.append(input('Private Key for input %d:' % (index + 1)))
-
         input_txns = jsonobj['Inputs']
 
-        signed_txn = sign_raw_txn(mptr, privkey_wif_list, input_txns)
+        signed_txn = sign_raw_txn(mptr, address_privkey_map, input_txns)
 
-        jsonobj['Signed Txn'] = signed_txn
+        jsonobj['Signed Txn'] = bytes.decode(binascii.hexlify(signed_txn))
 
         return jsonobj
-
-if __name__ == '__main__':
-        jsonobj = json.load(open('transfer_info.json', 'rt'))
-        return_signed_txn(jsonobj)

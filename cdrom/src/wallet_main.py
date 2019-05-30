@@ -4,13 +4,7 @@ import sign_raw_txn
 import mnemonic_code
 import os
 import tkinter
-
-#f_mnemonic_codes = open('mnemonic_code_status.log', 'w+')
-#f_hdwallet = open('hdwallet_status.log', 'w+')
-#print('key_selector,privkey_wif,pubkey,hash160,script,hash160_script,address', file=f_hdwallet)
-#f_hdwallet.flush()
-#f_txn = open('txn_status.log', 'w+')
-#print('in_privkey_wif,in_address,in_value, out_address, out_value, change_address, change_value, status', file=f_txn)
+import hd_wallet
 
 network_port_map_g = {
         'regtest': 18443,
@@ -25,17 +19,8 @@ transfer_info_map_g = {
 # Example mnenomic code
 #mnemonic_code_s = "ill virus lottery repair poem injury filter mammal play erase gym camera"
 
-def generate_signed_transaction():
-        jsonobj = request.get_json()
-        jsonobj = sign_raw_txn.return_signed_txn(jsonobj)
-        print('jsonobj = %s' % json.dumps(jsonobj))
-        print(jsonobj, file=transfer_info_f)
-
-def generate_address_list(salt: str, network: str):
-        import hd_wallet
-        global file_path_g
-
-        with open('../../config/hd_wallet.conf', 'rt') as wallet_config:
+def wallet_ui(salt: str, network: str):
+        with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as wallet_config:
                 jsonobj = json.load(wallet_config)
 
         wallet = hd_wallet.HDWallet(salt, network)
@@ -78,6 +63,28 @@ def generate_address_list(salt: str, network: str):
 
         root.mainloop()
 
+        return seed_b, wallet
+
+def generate_signed_transaction(salt: str, network: str):
+        global file_path_g
+
+        seed_b, wallet = wallet_ui(salt, network)
+
+        with open(file_path_g, 'rt') as transfer_info_f:
+                jsonobj = json.load(transfer_info_f)
+
+        address_privkey_map = wallet.getAddressPrivkeyMap(seed_b)
+
+        jsonobj = sign_raw_txn.return_signed_txn(jsonobj, address_privkey_map)
+
+        with open(file_path_g, 'wt') as transfer_info_f:
+                json.dump(jsonobj, transfer_info_f)
+
+def generate_address_list(salt: str, network: str):
+        global file_path_g
+
+        seed_b, wallet = wallet_ui(salt, network)
+
         if os.path.isfile(file_path_g):
                 with open(file_path_g, 'rt') as transfer_info_f:
                         jsonobj = json.load(transfer_info_f)
@@ -86,7 +93,6 @@ def generate_address_list(salt: str, network: str):
 
         jsonobj['Addresses'] = wallet.get_addresses(seed_b)
 
-        print('jsonobj = %s' % json.dumps(jsonobj))
         with open(file_path_g, 'wt') as transfer_info_f:
                 json.dump(jsonobj, transfer_info_f)
 
@@ -99,16 +105,16 @@ if __name__ == '__main__':
 
         if options.test:
                 network = 'regtest'
-                datadir = '/tmp/share'
+                datadir = '/home/online/wallet'
                 salt = 'test'
         else:
-                with open('../config/hd_wallet.conf', 'rt') as conf_f:
+                with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as conf_f:
                         jsonobj = json.load(conf_f)
                 network = jsonobj['network']
                 datadir = jsonobj['datadir']
                 salt = jsonobj['salt']
 
-        file_path_g = datadir + os.path.sep + transfer_info_map_g[network]
+        file_path_g = os.path.join(datadir, transfer_info_map_g[network])
         port_g = network_port_map_g[network]
 
         print('1:\tGenerate Addresses')
@@ -117,6 +123,6 @@ if __name__ == '__main__':
         if choice == 1:
                 generate_address_list(salt, network)
         elif choice == 2:
-                generate_signed_transaction()
+                generate_signed_transaction(salt, network)
         else:
                 print('Invalid choice')

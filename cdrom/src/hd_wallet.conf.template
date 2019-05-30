@@ -1,5 +1,5 @@
 {
 	"salt": "xxxxxx",
-	"network": "mainnet/testnet/regtest",
+	"network": "mainnet|testnet|regtest",
         "datadir": "/tmp/share"
 }
