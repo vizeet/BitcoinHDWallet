@@ -2,7 +2,6 @@ import pubkey_address
 import mnemonic_code
 from utility_adapters import bitcoin_secp256k1, hash_utils
 from utils import pbkdf2
-import tkinter
 import json
 import binascii
 import hashlib
@@ -12,9 +11,6 @@ import os
 import sign_raw_txn
 
 class HDWallet:
-        key_selector_first = ''
-        key_selector_last = ''
-
         def __init__(self, salt: str, network: str):
                 self.salt = salt
                 self.network = network
@@ -23,14 +19,14 @@ class HDWallet:
                 seed = pbkdf2.pbkdf2(hashlib.sha512, code, salt, 2048, 64)
                 return seed
 
-        def get_addresses(self, seed_b: bytes):
+        def get_addresses(self, seed_b: bytes, key_selector_first: str, key_selector_last: str):
                 addresses = []
 
-                first = int(self.key_selector_first.rsplit('/', 1)[1])
-                last = int(self.key_selector_last.rsplit('/', 1)[1])
+                first = int(key_selector_first.rsplit('/', 1)[1])
+                last = int(key_selector_last.rsplit('/', 1)[1])
 
                 for index in range(first, last + 1):
-                        key_selector = '%s/%d' % (self.key_selector_first.rsplit('/', 1)[0], index)
+                        key_selector = '%s/%d' % (key_selector_first.rsplit('/', 1)[0], index)
                         print('key_selector = %s' % key_selector)
                         print('network = %s' % self.network)
                         privkey_i, chaincode = self.generatePrivkeyPubkeyPair(key_selector, seed_b, True)
@@ -43,14 +39,14 @@ class HDWallet:
 
                 return addresses
 
-        def getAddressPrivkeyMap(self, seed_b: bytes):
+        def getAddressPrivkeyMap(self, seed_b: bytes, key_selector_first: str, key_selector_last: str):
                 address_privkey_map = {}
 
-                first = int(self.key_selector_first.rsplit('/', 1)[1])
-                last = int(self.key_selector_last.rsplit('/', 1)[1])
+                first = int(key_selector_first.rsplit('/', 1)[1])
+                last = int(key_selector_last.rsplit('/', 1)[1])
 
                 for index in range(first, last + 1):
-                        key_selector = '%s/%d' % (self.key_selector_first.rsplit('/', 1)[0], index)
+                        key_selector = '%s/%d' % (key_selector_first.rsplit('/', 1)[0], index)
                         print('key_selector = %s' % key_selector)
                         print('network = %s' % self.network)
                         privkey_i, chaincode = self.generatePrivkeyPubkeyPair(key_selector, seed_b, True)
@@ -63,16 +59,6 @@ class HDWallet:
                         address_privkey_map[address] = privkey_wif
 
                 return address_privkey_map
-
-        def generate_addresses(self, mnemonic_code_s: str, first: str, last: str):
-                seed_b = self.generateSeedFromStr(mnemonic_code_s, "mnemonic" + self.salt)
-
-                self.key_selector_first = first
-                self.key_selector_last = last
-
-                addresses = self.get_addresses(seed_b)
-
-                return addresses
 
         def generateChildAtIndex(self, privkey: int, chaincode: bytes, index: int):
                 if index >= (1<<31):
