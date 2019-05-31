@@ -166,8 +166,6 @@ if __name__ == '__main__':
         print('1:\tGenerate Addresses')
         print('2:\tSign Transaction')
 
-        time.sleep(10)
-
         choice = int(input('Selection:'))
 
         if choice == 1:
