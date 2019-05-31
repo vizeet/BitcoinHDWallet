@@ -8,7 +8,7 @@ import pubkey_address
 import ecdsa
 
 #"Input txn": [{"value": 50.00000000, "scriptPubKey": "a9143dac417e755b3445891111b96aad23626ecfe49587"}],
-#        "Raw txn": "0200000001aecf5c19f7d9c1cb83d193df7b5f351ef6636b68a62280d07d12c9a73b3554a70000000000ffffffff0200f902950000000017a9142aa793f2e0d059d12fbe77edd743eb341559f0f187c0ebff940000000017a91436f2c696e6f4f335d35d27aa537446194e8394638700000000"
+#        "Raw Txn": "0200000001aecf5c19f7d9c1cb83d193df7b5f351ef6636b68a62280d07d12c9a73b3554a70000000000ffffffff0200f902950000000017a9142aa793f2e0d059d12fbe77edd743eb341559f0f187c0ebff940000000017a91436f2c696e6f4f335d35d27aa537446194e8394638700000000"
 
 def btc2bytes(btc: float):
         satoshis = int(btc * (10**8))
@@ -319,7 +319,7 @@ def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
         return signed_txn
 
 def return_signed_txn(jsonobj: dict, address_privkey_map: dict):
-        raw_txn_s = jsonobj['Raw txn']
+        raw_txn_s = jsonobj['Raw Txn']
         mptr = mmap.mmap(-1, len(raw_txn_s) + 1)
         mptr.write(binascii.unhexlify(raw_txn_s))
         mptr.seek(0)
