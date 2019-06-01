@@ -1,6 +1,6 @@
-# BitcoinHDWallet
+# BitcoinHDWalletP2SH_P2WPKH
 
-BitcoinHDWallet is an offline bitcoin wallet based on Hierarchical Deterministic Wallet BIP32 implementation. It works with its Online counter part project OnlineWalletP2SH_P2WPKH.
+BitcoinHDWalletP2SH_P2WPKH is an offline bitcoin wallet based on Hierarchical Deterministic Wallet BIP32 implementation. It works with its Online counter part project OnlineWalletP2SH_P2WPKH.
 
 Installation instruction currently covers only Linux environment.
 
