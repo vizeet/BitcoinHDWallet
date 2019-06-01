@@ -24,8 +24,8 @@ Requires two USB drives:
 Steps:
 1. Clone code
 ```bash
-git clone https://github.com/vizeet/BitcoinHDWallet.git
-cd BitcoinHDWallet
+git clone https://github.com/vizeet/BitcoinHDWalletP2SH_P2WPKH.git
+cd BitcoinHDWalletP2SH_P2WPKH
 ```
 2. To create ISO image of code 
 ```bash
