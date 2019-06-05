@@ -31,7 +31,14 @@ cd BitcoinHDWalletP2SH_P2WPKH
 ```bash
 ./prepare_iso.sh
 ```
+
 3. Create USB for code and data
+Automated script:
+```bash
+./create_partition.sh /dev/<device>
+```
+
+Manual steps:
 You can use any partition manager to create two partition. 
    1. Create empty partition (requires less than 100mb space) for code and copy iso to the partition.
    2. Create ext4/fat32 partition with a label
