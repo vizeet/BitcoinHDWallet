@@ -1,5 +1,7 @@
 #!/bin/bash
 
+partprobe
+
 # unmount partitions
 for l in $(echo "p"| sudo fdisk $1 | grep "^$1"| awk '{print $1}')
 do
@@ -35,11 +37,11 @@ partprobe
 # Copy code iso to Empty Partition
 part=$(echo "p"| sudo fdisk $1 | grep "^$1" | awk '$NF== "Empty" {print $1}')
 
-dd if=disk.iso of=$part
+sudo dd if=disk.iso of=$part
 
 # Mount Data Partition
 part=$(echo "p"| sudo fdisk $1 | grep "^$1" | awk '$NF== "Linux" {print $1}')
-mkdir /media/$USER/data
-mount $part /media/$USER/data
+sudo mkdir /media/$USER/data
+sudo mount $part /media/$USER/data
 
 
