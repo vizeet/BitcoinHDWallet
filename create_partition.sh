@@ -46,4 +46,8 @@ part=$(echo "p"| sudo fdisk $1 | grep "^$1" | awk '$NF== "Linux" {print $1}')
 sudo mkdir /media/$USER/data
 sudo mount $part /media/$USER/data
 
+# Change Partition type from Empty to Linux
+partnum=$(echo "p"| sudo fdisk $1 | grep "^$1" | awk '$NF== "Empty" {print substr($1,9)}')
+(echo t; echo $partnum; echo 83; echo w) | sudo fdisk $1
 
+sudo partprobe $1
