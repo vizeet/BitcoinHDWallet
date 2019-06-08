@@ -1,7 +1,6 @@
 #!/bin/bash
 cp -Rf /media/ubuntu/CDROM/* /tmp
 chmod 775 /tmp/autosetup
-chmod 775 /tmp/SimpleBitcoinWallet
 sudo apt install -y /tmp/autosetup/libexpat1-dev_2.1.0-7ubuntu0.16.04.3_amd64.deb
 sudo apt install -y /tmp/autosetup/libpython3.5-dev_3.5.2-2ubuntu0~16.04.5_amd64.deb
 sudo apt install -y /tmp/autosetup/libpython3-dev_3.5.1-3_amd64.deb
