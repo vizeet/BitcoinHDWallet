@@ -37,7 +37,7 @@ network_port_map_g = {
 }
 
 transfer_info_map_g = {
-        'regtest': 'transfer_info_test.json',
+        'regtest': 'transfer_info_regtest.json',
         'mainnet': 'transfer_info.json'
 }
 
@@ -94,8 +94,8 @@ def on_button_selector(e1, e2, root):
 def wallet_ui(salt: str, network: str):
         global entries_g, message_g, key_selector_first_g, key_selector_last_g
 
-        with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as wallet_config:
-                jsonobj = json.load(wallet_config)
+#        with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as wallet_config:
+#                jsonobj = json.load(wallet_config)
 
         top = tkinter.Toplevel()
         top.title("RUN ON START TEST")
@@ -172,12 +172,12 @@ if __name__ == '__main__':
         (options, _) = parser.parse_args()
 
         if options.test:
-                network = 'regtest'
-                datadir = '/home/online/wallet'
-                salt = 'test'
+                config_filename = 'hd_wallet_regtest.conf'
         else:
-                with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as conf_f:
-                        jsonobj = json.load(conf_f)
+                config_filename = 'hd_wallet.conf'
+
+        with open(os.path.join(os.getenv('WALLET_HOME'), 'config', config_filename), 'rt') as conf_f:
+                jsonobj = json.load(conf_f)
                 network = jsonobj['network']
                 datadir = jsonobj['datadir']
                 salt = jsonobj['salt']
