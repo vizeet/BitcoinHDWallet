@@ -33,15 +33,16 @@ cd BitcoinHDWalletP2SH_P2WPKH
 ```
 
 3. Create USB for code and data
+
 Automated script:
 ```bash
 ./create_partition.sh /dev/<device>
 ```
 
 Manual steps:
-You can use any partition manager to create two partition. 
+You can use any partition manager to create following two partition. 
    1. Create empty partition (requires less than 100mb space) for code and copy iso to the partition.
-   2. Create ext4/fat32 partition with a label
+   2. Create ext4/fat32 partition with a label "data"
 
 ```bash
 sudo dd if=disk.iso of=/dev/<partition 1>
@@ -49,7 +50,7 @@ sudo dd if=disk.iso of=/dev/<partition 1>
 
 4. Boot using ubuntu usb and try out the OS
 
-5. Mount code and data partitions and cd into code
+5. Mount code and data partitions and cd into code as superuser
 ```bash
 cd /media/ubuntu/CDROM
 ```
@@ -65,7 +66,8 @@ source ./setenv
 7. Update wallet configuration:
 ```bash
 cd config
-cp hd_wallet.config.template hd_wallet.config
+mv hd_wallet.config.template hd_wallet.config
+chmod 666 hd_wallet.config
 ```
 ```json
 {
@@ -99,10 +101,10 @@ python3 wallet_main.py [-t]
 -t is for running in test mode
 > Fill the mnemonic code in widget. Any mistake during filling will give error. And if mnemonic code is wrong it will print error in commandline.
 Next it will ask to fill first and the last selector. Format is : m/a/b/c/...
-Start is m/../1 and end is m/../100.(example m/5/1 to m/5/100). I think range is upto 32000. 
+Start is m/../1 and end is m/../100.(example m/5/1 to m/5/100). Range is upto 0x80000000 which is very large number. 
 Select option 1 to generate address
 
-4. Validate addresses and Generate raw transaction from online wallet.
+4. Validate addresses and Generate raw transaction using online wallet.
 
 5. Sign raw transaction:
 ```bash
@@ -113,9 +115,8 @@ After filling mnemonic and selector range. select 2 for signing raw transaction.
 6. Publish this signed transaction which appears in "transaction_info.json". Either using online wallet or any web utility.
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
+Pull requests are welcome. 
+For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
