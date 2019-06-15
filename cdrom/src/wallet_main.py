@@ -74,12 +74,13 @@ def callback2(test_message):
                 test_message.set("Wrong")
 
 def callback(y: int):
-    toplevel = tkinter.Toplevel()
-    message = tkinter.StringVar()
-    entry = tkinter.Entry(toplevel, textvariable=message, width=10)
-    button = tkinter.Button(toplevel, text="Get", command=lambda y=y, entry=entry, toplevel=toplevel: on_button(y, entry, toplevel))
-    entry.pack()
-    button.pack()
+        toplevel = tkinter.Toplevel()
+        toplevel.title('%d' % (y + 1))
+        message = tkinter.StringVar()
+        entry = tkinter.Entry(toplevel, textvariable=message, width=20)
+        button = tkinter.Button(toplevel, text="Get", command=lambda y=y, entry=entry, toplevel=toplevel: on_button(y, entry, toplevel))
+        entry.pack()
+        button.pack()
 
 def on_button_selector(e1, e2, root):
         global key_selector_first_g, key_selector_last_g
@@ -92,13 +93,10 @@ def on_button_selector(e1, e2, root):
                 print('Invalid selectors')
 
 def wallet_ui(salt: str, network: str):
-        global entries_g, message_g, key_selector_first_g, key_selector_last_g
-
-#        with open(os.path.join(os.getenv('WALLET_HOME'), 'config', 'hd_wallet.conf'), 'rt') as wallet_config:
-#                jsonobj = json.load(wallet_config)
+        global entries_g, message_g, key_selector_first_g, key_selector_last_g, tkvar_g
 
         top = tkinter.Toplevel()
-        top.title("RUN ON START TEST")
+        top.title("Hierarchical Deterministic Wallet")
 
         testvar = tkinter.StringVar()
         testvar.set("Test")
@@ -124,18 +122,33 @@ def wallet_ui(salt: str, network: str):
         root = tkinter.Tk()
         tkinter.Label(root, text="Access Key First:").grid(row=0)
         tkinter.Label(root, text="Access Key Last").grid(row=1)
+        tkinter.Label(root, text="Choose Crypto").grid(row = 2, column = 1)
+
+        tkvar_g = tkinter.StringVar(root)
+
+        choices = { 'Bitcoin'}
+        tkvar_g.set('Bitcoin') # set the default option
 
         e1 = tkinter.Entry(root)
         e2 = tkinter.Entry(root)
+        popupMenu = tkinter.OptionMenu(root, tkvar_g, *choices)
 
         e1.grid(row=0, column=1)
         e2.grid(row=1, column=1)
+        popupMenu.grid(row = 3, column =1)
 
-        tkinter.Button(root, text='Get', command=lambda e1=e1, e2=e2, root=root: on_button_selector(e1, e2, root)).grid(row=3, column=1, sticky=tkinter.W, pady=4)
+        tkinter.Button(root, text='Get', command=lambda e1=e1, e2=e2, root=root: on_button_selector(e1, e2, root)).grid(row=5, column=1, sticky=tkinter.W, pady=4)
+
+        tkvar_g.trace('w', change_dropdown)
 
         root.mainloop()
 
         return seed_b, wallet
+
+# on change dropdown value
+def change_dropdown(*args):
+        global tkvar_g
+        print( tkvar_g.get() )
 
 def generate_signed_transaction(seed_b: bytes, wallet):
         global file_path_g, key_selector_first_g, key_selector_last_g
@@ -182,7 +195,9 @@ if __name__ == '__main__':
                 datadir = jsonobj['datadir']
                 salt = jsonobj['salt']
 
-        file_path_g = os.path.join(datadir, transfer_info_map_g[network])
+        user = input('Username: ').lower()
+
+        file_path_g = os.path.join(datadir, '%s.%s.json' % (transfer_info_map_g[network], user))
         port_g = network_port_map_g[network]
  
         seed_b, wallet = wallet_ui(salt, network)
