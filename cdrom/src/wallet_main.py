@@ -31,14 +31,21 @@ import tkinter
 import hd_wallet
 import time
 
-network_port_map_g = {
+btc_network_port_map_g = {
         'regtest': 18443,
+        'testnet': 18332,
         'mainnet': 8332
 }
 
+ltc_network_port_map_g = {
+        'regtest': 19443,
+        'testnet': 19332,
+        'mainnet': 9332
+}
+
 transfer_info_map_g = {
-        'regtest': 'transfer_info_regtest.json',
-        'mainnet': 'transfer_info.json'
+        'regtest': 'transfer_info_regtest',
+        'mainnet': 'transfer_info'
 }
 
 # Example mnenomic code
@@ -198,7 +205,7 @@ if __name__ == '__main__':
         user = input('Username: ').lower()
 
         file_path_g = os.path.join(datadir, '%s.%s.json' % (transfer_info_map_g[network], user))
-        port_g = network_port_map_g[network]
+        port_g = btc_network_port_map_g[network]
  
         seed_b, wallet = wallet_ui(salt, network)
 
