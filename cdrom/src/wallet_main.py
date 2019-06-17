@@ -31,18 +31,6 @@ import tkinter
 import hd_wallet
 import time
 
-btc_network_port_map_g = {
-        'regtest': 18443,
-        'testnet': 18332,
-        'mainnet': 8332
-}
-
-ltc_network_port_map_g = {
-        'regtest': 19443,
-        'testnet': 19332,
-        'mainnet': 9332
-}
-
 transfer_info_map_g = {
         'regtest': 'transfer_info_regtest',
         'mainnet': 'transfer_info'
@@ -119,7 +107,7 @@ def wallet_ui(salt: str, network: str):
 
         top.mainloop()
 
-        wallet = hd_wallet.HDWallet(salt, network)
+        wallet = hd_wallet.HDWallet(salt)
 
         mnemonic_code_str = " ".join(entries_g)
         print('is valid = %r' % mnemonic_code.verifyMnemonicWordCodeString(mnemonic_code_str))
@@ -133,8 +121,8 @@ def wallet_ui(salt: str, network: str):
 
         tkvar_g = tkinter.StringVar(root)
 
-        choices = { 'Bitcoin'}
-        tkvar_g.set('Bitcoin') # set the default option
+        choices = { 'bitcoin', 'litecoin'}
+        tkvar_g.set('bitcoin') # set the default option
 
         e1 = tkinter.Entry(root)
         e2 = tkinter.Entry(root)
@@ -158,14 +146,14 @@ def change_dropdown(*args):
         print( tkvar_g.get() )
 
 def generate_signed_transaction(seed_b: bytes, wallet):
-        global file_path_g, key_selector_first_g, key_selector_last_g
+        global file_path_g, key_selector_first_g, key_selector_last_g, tkvar_g
 
         with open(file_path_g, 'rt') as transfer_info_f:
                 jsonobj = json.load(transfer_info_f)
 
         address_privkey_map = wallet.getAddressPrivkeyMap(seed_b, key_selector_first_g, key_selector_last_g)
 
-        jsonobj = sign_raw_txn.return_signed_txn(jsonobj, address_privkey_map)
+        jsonobj = sign_raw_txn.return_signed_txn(jsonobj, address_privkey_map, wallet.getNetwork(), tkvar_g.get())
 
         with open(file_path_g, 'wt') as transfer_info_f:
                 json.dump(jsonobj, transfer_info_f)
@@ -202,13 +190,14 @@ if __name__ == '__main__':
                 datadir = jsonobj['datadir']
                 salt = jsonobj['salt']
 
-        user = input('Username: ').lower()
-
-        file_path_g = os.path.join(datadir, '%s.%s.json' % (transfer_info_map_g[network], user))
-        port_g = btc_network_port_map_g[network]
- 
         seed_b, wallet = wallet_ui(salt, network)
 
+        wallet.setCrypto(network, tkvar_g.get())
+
+        user = input('Username: ').lower()
+
+        file_path_g = os.path.join(datadir, '%s.%s.%s.json' % (transfer_info_map_g[network], tkvar_g.get(), user))
+ 
         print('1:\tGenerate Addresses')
         print('2:\tSign Transaction')
 

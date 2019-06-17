@@ -32,12 +32,18 @@ import hashlib
 import hmac
 from ecdsa import SigningKey, SECP256k1
 import os
-import sign_raw_txn
 
 class HDWallet:
-        def __init__(self, salt: str, network: str):
+        def __init__(self, salt: str):
                 self.salt = salt
+
+        def setCrypto(self, network: str, crypto: str):
+                print('network = %s' % network)
                 self.network = network
+                self.crypto_utility = pubkey_address.CryptoUtility(network, crypto)
+
+        def getNetwork(self):
+                return self.network
 
         def generateSeedFromStr(self, code: str, salt: str):
                 seed = pbkdf2.pbkdf2(hashlib.sha512, code, salt, 2048, 64)
@@ -52,14 +58,15 @@ class HDWallet:
                 for index in range(first, last + 1):
                         key_selector = '%s/%d' % (key_selector_first.rsplit('/', 1)[0], index)
                         print('key_selector = %s' % key_selector)
-                        print('network = %s' % self.network)
                         privkey_i, chaincode = self.generatePrivkeyPubkeyPair(key_selector, seed_b, True)
-                        privkey_wif = pubkey_address.privkey2Wif(privkey_i, self.network)
+                        privkey_wif = self.crypto_utility.privkey2Wif(privkey_i)
                         pubkey = bytes.decode(binascii.hexlify(chaincode))
                         hash160_b = hash_utils.hash160(chaincode)
                         script_b = b'\x00\x14' + hash160_b
                         hash160_script_b = hash_utils.hash160(script_b)
-                        addresses.append(pubkey_address.sh2address(hash160_script_b, self.network))
+                        address = self.crypto_utility.sh2address(hash160_script_b)
+                        print('privkey = %s, pubkey = %s, hash160 = %s, script = %s, hash160_script = %s, address = %s' % (privkey_wif, pubkey, bytes.decode(binascii.hexlify(hash160_b)), bytes.decode(binascii.hexlify(script_b)), bytes.decode(binascii.hexlify(hash160_script_b)), address ))
+                        addresses.append(address)
 
                 return addresses
 
@@ -72,14 +79,13 @@ class HDWallet:
                 for index in range(first, last + 1):
                         key_selector = '%s/%d' % (key_selector_first.rsplit('/', 1)[0], index)
                         print('key_selector = %s' % key_selector)
-                        print('network = %s' % self.network)
                         privkey_i, chaincode = self.generatePrivkeyPubkeyPair(key_selector, seed_b, True)
-                        privkey_wif = pubkey_address.privkey2Wif(privkey_i, self.network)
+                        privkey_wif = self.crypto_utility.privkey2Wif(privkey_i)
                         pubkey = bytes.decode(binascii.hexlify(chaincode))
                         hash160_b = hash_utils.hash160(chaincode)
                         script_b = b'\x00\x14' + hash160_b
                         hash160_script_b = hash_utils.hash160(script_b)
-                        address = pubkey_address.sh2address(hash160_script_b, self.network)
+                        address = self.crypto_utility.sh2address(hash160_script_b)
                         address_privkey_map[address] = privkey_wif
 
                 return address_privkey_map
@@ -97,7 +103,7 @@ class HDWallet:
                         vk = sk.get_verifying_key()
 
                         full_pubkey_b = b'\x04' + vk.to_string()
-                        pubkey = pubkey_address.compressPubkey(full_pubkey_b)
+                        pubkey = self.crypto_utility.compressPubkey(full_pubkey_b)
                         h = hmac.new(chaincode, pubkey + binascii.unhexlify('%08x' % index), hashlib.sha512).digest()
                 childprivkey = (int(binascii.hexlify(h[0:32]), 16) + privkey) % bitcoin_secp256k1.N
                 child_chaincode = h[32:64]
@@ -128,6 +134,6 @@ class HDWallet:
                 vk = sk.get_verifying_key()
 
                 full_pubkey_b = b'\x04' + vk.to_string()
-                pubkey = pubkey_address.compressPubkey(full_pubkey_b)
+                pubkey = self.crypto_utility.compressPubkey(full_pubkey_b)
                 return privkey, pubkey
 

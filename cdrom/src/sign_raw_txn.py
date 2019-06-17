@@ -208,8 +208,10 @@ def validateRawTxn(mptr: mmap):
         pass
 
 def sign_txn_input(preimage: bytes, privkey_wif: str):
+        global crypto_utility_g
+
         hash_preimage = hash_utils.hash256(preimage)
-        privkey_s = pubkey_address.privkeyWif2Hex(privkey_wif)
+        privkey_s = crypto_utility_g.privkeyWif2Hex(privkey_wif)
         privkey_b = binascii.unhexlify(privkey_s)[:-1]
         signingkey = ecdsa.SigningKey.from_string(privkey_b, curve=ecdsa.SECP256k1)
         sig_b = signingkey.sign_digest(hash_preimage, sigencode=ecdsa.util.sigencode_der_canonize) +b'\x01'
@@ -274,6 +276,8 @@ def get_preimage_hashes(mptr: mmap):
 #    nLockTime:    92040000
 #    nHashType:    01000000
 def get_preimage_list_p2sh_p2wpkh(mptr: mmap, privkey_list: list, input_txns: list):
+        global crypto_utility_g
+
         version = binascii.unhexlify('%08x' % 0x02)[::-1]
         sighash_all = binascii.unhexlify('%08x' % 0x01)[::-1]
 
@@ -285,7 +289,7 @@ def get_preimage_list_p2sh_p2wpkh(mptr: mmap, privkey_list: list, input_txns: li
 
         for index in range(input_count):
                 amount_b = btc2bytes(input_txns[index]['value'])
-                pubkey_b = pubkey_address.privkeyWif2pubkey(privkey_list[index])
+                pubkey_b = crypto_utility_g.privkeyWif2pubkey(privkey_list[index])
                 hash160_b = hash_utils.hash160(pubkey_b)
                 script = bytes([0x76, 0xa9, len(hash160_b)]) + hash160_b + bytes([0x88, 0xac])
                 script_size_b = bytes([len(script)])
@@ -294,6 +298,8 @@ def get_preimage_list_p2sh_p2wpkh(mptr: mmap, privkey_list: list, input_txns: li
         return preimage_list
 
 def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
+        global crypto_utility_g
+
         prev_ptr = mptr.tell()
         mptr.seek(0)
         signed_txn = b''
@@ -314,7 +320,7 @@ def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
         for index in range(len(input_txns)):
                 in_txn = input_txns[index]
                 privkey_wif = address_privkey_map[in_txn['address']]
-                pubkey_b = pubkey_address.privkeyWif2pubkey(privkey_wif)
+                pubkey_b = crypto_utility_g.privkeyWif2pubkey(privkey_wif)
                 hash160_b = hash_utils.hash160(pubkey_b)
                 script_b = b'\x00\x14' + hash160_b
                 script_size_b = bytes([len(script_b)])
@@ -342,7 +348,10 @@ def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
 
         return signed_txn
 
-def return_signed_txn(jsonobj: dict, address_privkey_map: dict):
+def return_signed_txn(jsonobj: dict, address_privkey_map: dict, network: str, crypto: str):
+        global crypto_utility_g
+
+        crypto_utility_g = pubkey_address.CryptoUtility(network, crypto)
         raw_txn_s = jsonobj['Raw Txn']
         mptr = mmap.mmap(-1, len(raw_txn_s) + 1)
         mptr.write(binascii.unhexlify(raw_txn_s))

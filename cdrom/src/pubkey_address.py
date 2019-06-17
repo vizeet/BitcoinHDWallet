@@ -22,72 +22,80 @@
 #SOFTWARE.
 ##################
 
-from utility_adapters import bitcoin_secp256k1
-from utility_adapters import bitcoin_base58
-from utility_adapters.bitcoin_secp256k1 import P
 import binascii
 import hashlib
 from utility_adapters import hash_utils
 from ecdsa import SigningKey, SECP256k1
 
 # uncompressed public key has b'\x04' prefix
-def compressPubkey(pubkey: bytes):
-        x_b = pubkey[1:33]
-        y_b = pubkey[33:65]
-        if (y_b[31] & 0x01) == 0: # even
-                compressed_pubkey = b'\x02' + x_b
-        else:
-                compressed_pubkey = b'\x03' + x_b
-        return compressed_pubkey
 
-def privkeyHex2pubkey(privkey_s: str):
-        compress = False
-        if len(privkey_s) == 66:
-                privkey_s = privkey_s[0:64]
-                compress = True
-        privkey_i = int(privkey_s, 16)
-        return privkey2pubkey(privkey_i, compress)
+class CryptoUtility:
+        def __init__(self, nettype: str, crypto: str):
+                self.nettype = nettype
+                self.crypto = crypto
+                if crypto == 'bitcoin':
+                        from utility_adapters import bitcoin_base58 as coin_base58
+                elif crypto == 'litecoin':
+                        from utility_adapters import litecoin_base58 as coin_base58
+                self.coin_base58 = coin_base58
 
-def privkey2pubkey(privkey: int, compress = True):
-        privkey_s = '%064x' % privkey
-        if privkey_s.__len__() % 2 == 1:
-                privkey_s = "0{}".format(privkey_s)
+        def compressPubkey(self, pubkey: bytes):
+                x_b = pubkey[1:33]
+                y_b = pubkey[33:65]
+                if (y_b[31] & 0x01) == 0: # even
+                        compressed_pubkey = b'\x02' + x_b
+                else:
+                        compressed_pubkey = b'\x03' + x_b
+                return compressed_pubkey
 
-        privkey_b = binascii.unhexlify(privkey_s)
-        sk = SigningKey.from_string(privkey_b, curve=SECP256k1)
-        vk = sk.get_verifying_key()
+        def privkeyHex2pubkey(self, privkey_s: str):
+                compress = False
+                if len(privkey_s) == 66:
+                        privkey_s = privkey_s[0:64]
+                        compress = True
+                privkey_i = int(privkey_s, 16)
+                return self.privkey2pubkey(privkey_i, compress)
 
-        pubkey_b = b'\x04' + vk.to_string()
-        if compress == True:
-                pubkey_b = compressPubkey(pubkey_b)
+        def privkey2pubkey(self, privkey: int, compress = True):
+                privkey_s = '%064x' % privkey
+                if privkey_s.__len__() % 2 == 1:
+                        privkey_s = "0{}".format(privkey_s)
 
-        return pubkey_b
+                privkey_b = binascii.unhexlify(privkey_s)
+                sk = SigningKey.from_string(privkey_b, curve=SECP256k1)
+                vk = sk.get_verifying_key()
 
-def privkey2Wif(privkey: int, nettype: str, compress = True):
-        wif = bitcoin_base58.encodeWifPrivkey(privkey, nettype, compress)
-        return wif
+                pubkey_b = b'\x04' + vk.to_string()
+                if compress == True:
+                        pubkey_b = self.compressPubkey(pubkey_b)
 
-def privkeyWif2Hex(privkey: str):
-        nettype, prefix, privkey_s, for_compressed_pubkey = bitcoin_base58.decodeWifPrivkey(privkey)
-        if privkey_s.__len__() % 2 == 1:
-                privkey_s = "0{}".format(privkey_s)
-        return privkey_s
+                return pubkey_b
 
-def privkeyWif2pubkey(privkey: str):
-        privkey_s = privkeyWif2Hex(privkey)
-        pubkey = privkeyHex2pubkey(privkey_s)
-        return pubkey
+        def privkey2Wif(self, privkey: int, compress = True):
+                wif = self.coin_base58.encodeWifPrivkey(privkey, self.nettype, compress)
+                return wif
 
-def pkh2address(pkh: bytes, nettype: str):
-        address = bitcoin_base58.forAddress(pkh, nettype, False)
-        return address
+        def privkeyWif2Hex(self, privkey: str):
+                nettype, prefix, privkey_s, for_compressed_pubkey = self.coin_base58.decodeWifPrivkey(privkey)
+                if privkey_s.__len__() % 2 == 1:
+                        privkey_s = "0{}".format(privkey_s)
+                return privkey_s
 
-def sh2address(sh: bytes, nettype: str):
-        address = bitcoin_base58.forAddress(sh, nettype, True)
-        return address
+        def privkeyWif2pubkey(self, privkey: str):
+                privkey_s = self.privkeyWif2Hex(privkey)
+                pubkey = self.privkeyHex2pubkey(privkey_s)
+                return pubkey
 
-def pubkey2address(pubkey: bytes):
-        pkh = hash_utils.hash160(pubkey)
-        print('pkh = %s' % bytes.decode(binascii.hexlify(pkh)))
-        address = pkh2address(pkh)
-        return address
+        def pkh2address(self, pkh: bytes):
+                address = self.coin_base58.forAddress(pkh, self.nettype, False)
+                return address
+
+        def sh2address(self, sh: bytes):
+                address = self.coin_base58.forAddress(sh, self.nettype, True)
+                return address
+
+        def pubkey2address(self, pubkey: bytes):
+                pkh = hash_utils.hash160(pubkey)
+                print('pkh = %s' % bytes.decode(binascii.hexlify(pkh)))
+                address = self.pkh2address(pkh)
+                return address
