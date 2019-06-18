@@ -65,7 +65,7 @@ class HDWallet:
                         script_b = b'\x00\x14' + hash160_b
                         hash160_script_b = hash_utils.hash160(script_b)
                         address = self.crypto_utility.sh2address(hash160_script_b)
-                        print('privkey = %s, pubkey = %s, hash160 = %s, script = %s, hash160_script = %s, address = %s' % (privkey_wif, pubkey, bytes.decode(binascii.hexlify(hash160_b)), bytes.decode(binascii.hexlify(script_b)), bytes.decode(binascii.hexlify(hash160_script_b)), address ))
+#                        print('privkey = %s, pubkey = %s, hash160 = %s, script = %s, hash160_script = %s, address = %s' % (privkey_wif, pubkey, bytes.decode(binascii.hexlify(hash160_b)), bytes.decode(binascii.hexlify(script_b)), bytes.decode(binascii.hexlify(hash160_script_b)), address ))
                         addresses.append(address)
 
                 return addresses
