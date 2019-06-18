@@ -62,7 +62,7 @@ def callback2(test_message):
         #print('entries = %s' % entries)
         joined_word_key_list = ' '.join(entries_g)
         is_valid = mnemonic_code.verifyMnemonicWordCodeString(joined_word_key_list)
-        print('is valid = %r' % is_valid)
+#        print('is valid = %r' % is_valid)
         if is_valid:
                 test_message.set("Correct")
         else:
@@ -110,7 +110,7 @@ def wallet_ui(salt: str, network: str):
         wallet = hd_wallet.HDWallet(salt)
 
         mnemonic_code_str = " ".join(entries_g)
-        print('is valid = %r' % mnemonic_code.verifyMnemonicWordCodeString(mnemonic_code_str))
+#        print('is valid = %r' % mnemonic_code.verifyMnemonicWordCodeString(mnemonic_code_str))
 
         seed_b = wallet.generateSeedFromStr(mnemonic_code_str, "mnemonic" + wallet.salt)
 

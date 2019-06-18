@@ -36,7 +36,7 @@ import ecdsa
 
 def btc2bytes(btc: float):
         satoshis = int(btc * (10**8))
-        print('satoshis = %s' % satoshis)
+#        print('satoshis = %s' % satoshis)
         satoshis_s = '%016x' % satoshis
 
         if satoshis_s.__len__() % 2 == 1:
@@ -255,7 +255,7 @@ def get_preimage_hashes(mptr: mmap):
                 out_txn += mptr_read
                 scriptpubkey_size = getCount(mptr_read)
                 out_txn += mptr.read(scriptpubkey_size) # scriptpubkey
-        print('out_txn = %s' % bytes.decode(binascii.hexlify(out_txn)))
+#        print('out_txn = %s' % bytes.decode(binascii.hexlify(out_txn)))
         locktime_b = mptr.read(4)
         mptr.seek(prev_ptr)
 
@@ -305,7 +305,7 @@ def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
         signed_txn = b''
         estimated_txn_size = estimateSignedTxnSize(mptr)
 
-        print('estimated txn size = %d' % estimated_txn_size)
+#        print('estimated txn size = %d' % estimated_txn_size)
 
         sign_helper = getTxnReqIndexesForSigning(mptr)
 
@@ -344,7 +344,7 @@ def sign_raw_txn(mptr:mmap, address_privkey_map: dict, input_txns: list):
 
         mptr.close()
 
-        print('signed txn = %s' % bytes.decode(binascii.hexlify(signed_txn)))
+#        print('signed txn = %s' % bytes.decode(binascii.hexlify(signed_txn)))
 
         return signed_txn
 
