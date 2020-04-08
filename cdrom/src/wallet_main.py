@@ -30,6 +30,11 @@ import os
 import tkinter
 import hd_wallet
 import time
+from bitcoinutils.setup import setup
+from bitcoinutils.script import Script
+from bitcoinutils.keys import P2wpkhAddress, P2wshAddress, P2shAddress, PrivateKey, PublicKey
+
+setup('mainnet')
 
 transfer_info_map_g = {
         'regtest': 'transfer_info_regtest',
@@ -145,6 +150,30 @@ def change_dropdown(*args):
         global tkvar_g
         print( tkvar_g.get() )
 
+def verify_address_list(seed_b: bytes, wallet):
+        global file_path_g, key_selector_first_g, key_selector_last_g, tkvar_g
+
+        with open(file_path_g, 'rt') as transfer_info_f:
+                jsonobj = json.load(transfer_info_f)
+
+        address_privkey_map = wallet.getAddressPrivkeyMap(seed_b, key_selector_first_g, key_selector_last_g)
+
+        status = True
+ 
+        for address, privkey_wif in address_privkey_map.items():
+                addr = PrivateKey.from_wif(privkey_wif).get_public_key().get_segwit_address()
+                shaddr = P2shAddress.from_script(addr.to_script_pub_key())
+                if address == shaddr.to_string():
+                        print("address = %s, derived_address = %s, wif = %s, Matched" % (address, shaddr.to_string(), privkey_wif))
+                else:
+                        status = False
+                        print("address = %s, derived_address = %s, wif = %s, Unmatched" % (address, shaddr.to_string(), privkey_wif))
+
+        if status == False:
+                print('Failed')
+        else:
+                print('Success')
+
 def generate_signed_transaction(seed_b: bytes, wallet):
         global file_path_g, key_selector_first_g, key_selector_last_g, tkvar_g
 
@@ -200,6 +229,7 @@ if __name__ == '__main__':
  
         print('1:\tGenerate Addresses')
         print('2:\tSign Transaction')
+        print('3:\tVerify Addresses')
 
         choice = int(input('Selection:'))
 
@@ -207,5 +237,7 @@ if __name__ == '__main__':
                 generate_address_list(seed_b, wallet)
         elif choice == 2:
                 generate_signed_transaction(seed_b, wallet)
+        elif choice == 3:
+                verify_address_list(seed_b, wallet)
         else:
                 print('Invalid choice')
